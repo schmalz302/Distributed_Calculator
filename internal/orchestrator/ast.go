@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	_ "strconv"
 	"strings"
 )
 
@@ -141,25 +140,4 @@ func ParseFactor(tokens *[]string, pos *int) *Node {
 	}
 
 	return &Node{Op: token}
-}
-
-
-func main() {
-	// expression := "(2 + 3) - (4 - 9) / (6 + 2)"
-	expression := "(2 + 3) - (4 - 9) / 5 - 66 * (22 + (6 + 2))"
-	ast := ParseExpression(expression)
-	fmt.Println(*((*ast).Right))
-
-	var taskList []Task
-
-	// Разбиваем AST на задачи
-	SplitTasks(ast, &taskList)
-
-	// Выводим список задач
-	fmt.Println("Список задач для выполнения:")
-	for _, task := range taskList {
-		// fmt.Printf("ID: %s, Op: %s, Arg1: %s, Arg2: %s -> Result: %s\n",
-		// 	task.ID, task.Op, task.Arg1, task.Arg2, task.ResultVar)
-		fmt.Println(task)
-	}
 }
