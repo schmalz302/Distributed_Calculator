@@ -35,7 +35,7 @@ type Expression struct {
 }
 
 // Добавляем задачи в очередь
-func (q *ExpressionQueue) AddExpression(expression string) {
+func (q *ExpressionQueue) AddExpression(expression string) string {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	// формируем дерево ast
@@ -46,12 +46,16 @@ func (q *ExpressionQueue) AddExpression(expression string) {
 	SplitTasks(node, &tasks)
 
 	// создаем объект выражения
-	exp_obj := Expression{ID: uuid.New().String(), count_tasks: len(tasks), Status: "pending"}
+	id_exp := uuid.New().String()
+	exp_obj := Expression{ID: id_exp, count_tasks: len(tasks), Status: "pending"}
+
+	q.expressions[id_exp] = &exp_obj
 
 	// закидываем задачи в пул задач
 	for _, task := range tasks {
 		q.pool_task[exp_obj.ID] = &task
 	}
+	return id_exp
 }
 
 func (q *ExpressionQueue) GetExpressionid(id string) (*Expression, error) {
