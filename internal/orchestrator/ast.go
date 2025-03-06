@@ -1,7 +1,6 @@
-package main
+package orchestrator
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -10,55 +9,6 @@ type Node struct {
 	Op    string
 	Left  *Node
 	Right *Node
-}
-
-// структура задачи
-type Task struct {
-	ID        string  `json:"id"`
-	Op        string  `json:"operation"`
-	Arg1      string  `json:"arg1"`
-	Arg2      string  `json:"arg2"`
-	Done      bool    `json:"-"`
-	Result    *float64 `json:"-"`
-}
-
-// глобальный счетчик задач
-var taskCounter = 1
-
-// функция разбиения AST на задачи
-func SplitTasks(node *Node, taskList *[]Task) string {
-	if node == nil {
-		return ""
-	}
-
-	// если это число — просто возвращаем его
-	if node.Left == nil && node.Right == nil {
-		return node.Op
-	}
-
-	// рекурсивно обрабатываем поддеревья
-	leftVar := SplitTasks(node.Left, taskList)
-	rightVar := SplitTasks(node.Right, taskList)
-
-	// создаем уникальный идентификатор задачи cчетчиком
-	taskID := fmt.Sprintf("id%d", taskCounter)
-	taskCounter++
-
-	// по сути это id данного узла, который будет являться аргументов узла выше
-	taskID_child := fmt.Sprintf("id%d", taskCounter-1)
-
-	// создаем задачу
-	task := Task{
-		ID:        taskID,
-		Op:        node.Op,
-		Arg1:      leftVar,
-		Arg2:      rightVar,
-	}
-
-	// добавляем задачу в список
-	*taskList = append(*taskList, task)
-
-	return taskID_child
 }
 
 // функция парсинга выражения в AST
