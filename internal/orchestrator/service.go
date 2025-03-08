@@ -2,10 +2,10 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/mux"
 )
 
 // Создание нового TaskQueue
@@ -38,6 +38,12 @@ type Response_Expression_List struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type ProcessTaskRequest struct {
+	Id             string
+	Result         float64
+	Operation_time int
 }
 
 func writeErrorResponse(w http.ResponseWriter, message string, statusCode int) {
@@ -92,8 +98,8 @@ func (q *ExpressionQueue) CRUD_GetExpression_id(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	id := chi.URLParam(r, "id")
-	fmt.Println(id)
+	vars := mux.Vars(r)
+	id := vars["id"]
 	expression, _ := q.GetExpressionid(id)
 
 	response := Response_Expression_id{Expression: *expression}
@@ -102,4 +108,23 @@ func (q *ExpressionQueue) CRUD_GetExpression_id(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(response)
 }
 
-func (q *ExpressionQueue) CRUD_ProcessTask(w http.ResponseWriter, r *http.Request) {}
+func (q *ExpressionQueue) CRUD_ProcessTask(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		response := q.GetTask()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	case http.MethodPost:
+		var req ProcessTaskRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		q.SubmitResult(req.Id, req.Result)
+
+	default:
+		writeErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+}

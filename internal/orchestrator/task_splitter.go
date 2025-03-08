@@ -29,6 +29,7 @@ func SplitTasks(node *Node, taskList *[]Task) string {
 		Op:   node.Op,
 		Arg1: leftVar,
 		Arg2: rightVar,
+		Status: 1,
 	}
 
 	// Добавляем задачу в список

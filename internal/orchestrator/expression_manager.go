@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
-
 	"github.com/google/uuid"
 )
 
 // структура задачи
 type Task struct {
-	ID            string   `json:"id"`
-	Op            string   `json:"operation"`
-	Arg1          string   `json:"arg1"`
-	Arg2          string   `json:"arg2"`
-	Status        int      `json:"-"` // 1 - принята, 2 - готова к обработке, 3 - обработка, 4 - завершена 
-	Result        string `json:"-"`
-	Expression_id string   `json:"-"`
+	ID             string `json:"id"`
+	Op             string `json:"operation"`
+	Arg1           string `json:"arg1"`
+	Arg2           string `json:"arg2"`
+	Operation_time int    `json:"operation_time"`
+	Status         int    `json:"Status"` // 1 - принята, 2 - готова к обработке, 3 - обработка, 4 - завершена
+	Result         string `json:"-"`
+	Expression_id  string `json:"-"`
 }
 
 // очередь выражений
@@ -53,14 +53,14 @@ func (q *ExpressionQueue) AddExpression(expression string) string {
 
 	// закидываем задачи в пул задач
 	for _, task := range tasks {
-		q.pool_task[exp_obj.ID] = &task
+		t := task 
+		t.Expression_id = id_exp
+		q.pool_task[task.ID] = &t
 	}
 	return id_exp
 }
 
 func (q *ExpressionQueue) GetExpressionid(id string) (*Expression, error) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
 
 	v, _ := q.expressions[id]
 	return v, nil
@@ -75,22 +75,30 @@ func (q *ExpressionQueue) GetAllExpressions() []*Expression {
 }
 
 func (q *ExpressionQueue) Update_task(task *Task) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
 	var check int
 	if !isNumber(task.Arg1) {
-		arg1 := q.pool_task[task.Arg1].Result
-		if arg1 != "" {
-			task.Arg1 = task.Arg1
-			check += 1
-		}
+		t1, r := q.pool_task[task.Arg1]
+		if r {	
+			arg1 := t1.Result
+			if arg1 != "" {
+				task.Arg1 = arg1
+				check += 1
+			}
+		} 
+	} else {
+		check += 1
 	}
 	if !isNumber(task.Arg2) {
-		arg2 := q.pool_task[task.Arg2].Result
-		if arg2 != "" {
-			task.Arg2 = task.Arg2
-			check += 1
-		}
+		t2, r := q.pool_task[task.Arg2]
+		if r {	
+			arg2 := t2.Result
+			if arg2 != "" {
+				task.Arg2 = arg2
+				check += 1
+			}
+		} 
+	} else {
+		check += 1
 	}
 	if check == 2 {
 		task.Status = 2
@@ -100,11 +108,10 @@ func (q *ExpressionQueue) Update_task(task *Task) {
 
 // Отдаем агенту первую доступную задачу
 func (q *ExpressionQueue) GetTask() *Task {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
 	for _, task := range q.pool_task {
-		q.Update_task(task)
+		if task.Status == 1 {
+			q.Update_task(task)
+		}
 		if task.Status == 2 {
 			task.Status = 3
 			return task
@@ -115,19 +122,26 @@ func (q *ExpressionQueue) GetTask() *Task {
 
 // Получаем результат от агента
 func (q *ExpressionQueue) SubmitResult(id string, result float64) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	task, err := q.pool_task[id]
+	if err {
 
-	task, exists := q.pool_task[id]
-
-	if !exists {
 		task.Result = fmt.Sprintf("%v", result)
-		q.expressions[task.Expression_id].count_tasks -= 1
-		task.Status = 4
+		if task.Status == 3 {
+			q.expressions[task.Expression_id].count_tasks -= 1
+			task.Status = 4
+		}
+		if q.expressions[task.Expression_id].count_tasks == 0 {
+			q.expressions[task.Expression_id].Result = fmt.Sprintf("%v", result)
+			q.expressions[task.Expression_id].Status = "done"
+			// удаляем все остальные таски
+			exp_id := task.Expression_id
+			for _, task := range q.pool_task {
+				if task.Expression_id == exp_id {
+					delete(q.pool_task, task.ID)
+				}
+		}
+
 	}
-	if q.expressions[task.Expression_id].count_tasks == 0 {
-		q.expressions[task.Expression_id].Result = fmt.Sprintf("%v", result)
-		q.expressions[task.Expression_id].Status = "done"
 	}
 }
 
