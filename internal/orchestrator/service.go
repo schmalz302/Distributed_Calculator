@@ -2,13 +2,13 @@ package orchestrator
 
 import (
 	"encoding/json"
-
+	"fmt"
+	"time"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
-// Создание нового TaskQueue
+// Создание новой очереди выражений
 func NewExpressionQueue() *ExpressionQueue {
 	return &ExpressionQueue{
 		expressions: make(map[string]*Expression),
@@ -16,6 +16,7 @@ func NewExpressionQueue() *ExpressionQueue {
 	}
 }
 
+// шаблоны для запросов и ответов
 type Request struct {
 	Expression string `json:"expression"`
 }
@@ -46,12 +47,15 @@ type ProcessTaskRequest struct {
 	Operation_time int
 }
 
+// запись ошибки в ответ
 func writeErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(ErrorResponse{Error: message})
 }
 
+// CRUD операции 
+// эндпоинт для создания выражения
 func (q *ExpressionQueue) CRUD_AddExpression(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -72,6 +76,7 @@ func (q *ExpressionQueue) CRUD_AddExpression(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(response)
 }
 
+// эндпоинт для получения всех выражений
 func (q *ExpressionQueue) CRUD_GetExpressions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -92,6 +97,7 @@ func (q *ExpressionQueue) CRUD_GetExpressions(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(response)
 }
 
+// эндпоинт для получения конкретного выражения
 func (q *ExpressionQueue) CRUD_GetExpression_id(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -108,10 +114,15 @@ func (q *ExpressionQueue) CRUD_GetExpression_id(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(response)
 }
 
+// эндпоинт обработки задач (отдача задачи и получение ответов)
 func (q *ExpressionQueue) CRUD_ProcessTask(w http.ResponseWriter, r *http.Request) {
+	currentTime := time.Now()
 	switch r.Method {
 	case http.MethodGet:
 		response := q.GetTask()
+		if response != nil {
+			fmt.Println("Время выдачи задачи:", currentTime)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -121,6 +132,7 @@ func (q *ExpressionQueue) CRUD_ProcessTask(w http.ResponseWriter, r *http.Reques
 			writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		fmt.Println("Время записи ответа:", currentTime)
 		q.SubmitResult(req.Id, req.Result)
 
 	default:

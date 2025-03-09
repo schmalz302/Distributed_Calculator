@@ -1,3 +1,7 @@
+// в этом файле будет происходить вся логика чтения, записи и обновления
+// выражений и задач
+
+
 package orchestrator
 
 import (
@@ -19,14 +23,15 @@ type Task struct {
 	Expression_id  string `json:"-"`
 }
 
-// очередь выражений
+// очередь выражений (на самом деле очереди не будет, есть просто пул задач,
+// которые можно выполнять параллельно)
 type ExpressionQueue struct {
 	mu          sync.Mutex
 	expressions map[string]*Expression
 	pool_task   map[string]*Task
 }
 
-// выражение
+// стрктура выражения
 type Expression struct {
 	ID          string `json:"id"`
 	Status      string `json:"status"` // "pending", "in_progress", "done"
@@ -60,12 +65,13 @@ func (q *ExpressionQueue) AddExpression(expression string) string {
 	return id_exp
 }
 
+// получаем задачу по id
 func (q *ExpressionQueue) GetExpressionid(id string) (*Expression, error) {
-
 	v, _ := q.expressions[id]
 	return v, nil
 }
 
+// получаем все задачи
 func (q *ExpressionQueue) GetAllExpressions() []*Expression {
 	expressions := []*Expression{}
 	for _, expr := range q.expressions {
@@ -74,6 +80,8 @@ func (q *ExpressionQueue) GetAllExpressions() []*Expression {
 	return expressions
 }
 
+
+// обновляем задачу, если ее аргументы вычислены
 func (q *ExpressionQueue) Update_task(task *Task) {
 	var check int
 	if !isNumber(task.Arg1) {
