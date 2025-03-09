@@ -35,7 +35,7 @@ Distributed Calculator – это распределенный калькуля�
 2. Клонируйте этот репозиторий и перейдите в него:
    ```cmd
    git clone https://github.com/schmalz302/Distributed_Calculator
-   cd Calc
+   cd Distributed_Calculator
    ```
 
 3. Запустите сервис с помощью команды:
@@ -48,44 +48,44 @@ Distributed Calculator – это распределенный калькуля�
 ## Использование
 Рекомендуется использовать `curl`, Postman или аналогичный инструмент для проверки работы сервиса. Проверьте все сценарии: корректные выражения, некорректные данные и симуляцию внутренних ошибок. Советую использовать Postman.
 
-## Сценарии использования /api/v1/calculate
+## Сценарии использования `/api/v1/calculate`
 
-| **Request Method** | **Endpoint** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
-|--------------------|--------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
-| POST               | `/api/v1/calculate`  | `{ "expression": "2 + 2" }`                               | `{ "id": "какой-то id"}`                             | 201 OK               |
-| POST               | `/api/v1/calculate`  | `{ "expression": "2 / 0" }`                               | `{"error": "Internal server error"}`                 | 500 Internal Server Error |
-| POST               | `/api/v1/calculate`  | `{ "expression": "invalid expression" }`                  | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
-| GET                | `/api/v1/calculate`  | N/A                                                       | `{ "error": "Method not allowed" }`                  | 405 Method Not Allowed |
+| **Request Method** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
+|--------------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
+| POST               | `{ "expression": "2 + 2" }`                               | `{ "id": "какой-то id"}`                             | 201 OK               |
+| POST               | `{ "expression": "2 / 0" }`                               | `{"error": "Internal server error"}`                 | 500 Internal Server Error |
+| POST               | `{ "expression": "invalid expression" }`                  | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
+| GET                | N/A                                                       | `{ "error": "Method not allowed" }`                  | 405 Method Not Allowed |
 
 
-## Сценарии использования /api/v1/expressions
+## Сценарии использования `/api/v1/expressions`
 
-| **Request Method** | **Endpoint** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
-|--------------------|--------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
-| GET               | `/api/v1/expressions`  | N/A                                | `{"expressions": [{"id": <идентификатор выражения>, "status": <статус вычисления выражения> "result": <результат выражения>},{"id": <идентификатор выражения>, "status": <статус вычисления выражения> "result": <результат выражения>}]}`            | 200 OK                    |
-| GET               | `/api/v1/expressions`  | N/A                              | `{"error": "Internal server error"}`               | 500 Internal Server Error | Entity |
-| POST              | `/api/v1/expressions`  | N/A                              | `{ "error": "Method not allowed" }`                | 405 Method Not Allowed    |
+| **Request Method** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
+|--------------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
+| GET               | N/A                                | `{"expressions": [{"id": <идентификатор выражения>, "status": <статус вычисления выражения> "result": <результат выражения>},{"id": <идентификатор выражения>, "status": <статус вычисления выражения> "result": <результат выражения>}]}`            | 200 OK                    |
+| GET               | N/A                              | `{"error": "Internal server error"}`               | 500 Internal Server Error | Entity |
+| POST              | N/A                              | `{ "error": "Method not allowed" }`                | 405 Method Not Allowed    |
 
-## Сценарии использования /api/v1/expressions/:id
+## Сценарии использования `/api/v1/expressions/:id`
 
-| **Request Method** | **Endpoint** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
-|--------------------|--------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
-| GET               | `/api/v1/expressions/:id`  | N/A                                | `{"expression": { "id": <идентификатор выражения>, "status": <статус вычисления выражения>, "result": <результат выражения>}}`                                    | 200 OK               |
-| GET               | `/api/v1/expressions/:id`  | N/A                                | `{"error": "Internal server error"}`         | 500 Internal Server Error        |
-| GET               | `/api/v1/expressions/:id`  | N/A                                | `{ "error": "Not Found" }`                   | 404 Not found                    |
-| POST              | `/api/v1/expressions/:id`  | N/A                                | `{ "error": "Method not allowed" }`          | 405 Method Not Allowed           |
+| **Request Method** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
+|--------------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
+| GET               |  N/A                                | `{"expression": { "id": <идентификатор выражения>, "status": <статус вычисления выражения>, "result": <результат выражения>}}`                                    | 200 OK               |
+| GET               |  N/A                                | `{"error": "Internal server error"}`         | 500 Internal Server Error        |
+| GET               |  N/A                                | `{ "error": "Not Found" }`                   | 404 Not found                    |
+| POST              |  N/A                                | `{ "error": "Method not allowed" }`          | 405 Method Not Allowed           |
 
-## Сценарии использования /internal/task
+## Сценарии использования `/internal/task`
 
-| **Request Method** | **Endpoint** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
-|--------------------|--------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
-| GET               | `/internal/task`  | N/A                                | `{"task":{"id": <идентификатор задачи>, "arg1": <имя первого аргумента>, "arg2": <имя второго аргумента>, "operation": <операция>,"operation_time": <время выполнения операции>}}`                                    | 200 OK               |
-| GET               | `/internal/task`  | N/A                               | `{"error": "Internal server error"}`                 | 500 Internal Server Error |
-| GET               | `/internal/task`  | N/A                          | `{ "error": "Not Found" }`                  | 404 Not found |
-| POST               | `/internal/task`  | `{"id": 1, "result": 2.5}`   | `{"expressions":"OK"}`                  | 200 OK |
-| POST               | `/internal/task`  | `{"id": 1, "result": 2.5}`   | `{ "error": "Not Found" }`                  | 404 Not found |
-| POST               | `/internal/task`  | `{"id": 1, "result": 2.5}`   | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
-| POST               | `/internal/task`  | `{"id": 1, "result": 2.5}`   |  `{"error": "Internal server error"}`                  | 500 Internal Server Error |
+| **Request Method** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
+|--------------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
+| GET               | N/A                                | `{"task":{"id": <идентификатор задачи>, "arg1": <имя первого аргумента>, "arg2": <имя второго аргумента>, "operation": <операция>,"operation_time": <время выполнения операции>}}`                                    | 200 OK               |
+| GET               | N/A                               | `{"error": "Internal server error"}`                 | 500 Internal Server Error |
+| GET                | N/A                          | `{ "error": "Not Found" }`                  | 404 Not found |
+| POST               | `{"id": 1, "result": 2.5}`   | `{"expressions":"OK"}`                  | 200 OK |
+| POST               | `{"id": 1, "result": 2.5}`   | `{ "error": "Not Found" }`                  | 404 Not found |
+| POST               | `{"id": 1, "result": 2.5}`   | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
+| POST               | `{"id": 1, "result": 2.5}`   |  `{"error": "Internal server error"}`                  | 500 Internal Server Error |
 
 ## Коды ответов
 - 200: Успешное вычисление
