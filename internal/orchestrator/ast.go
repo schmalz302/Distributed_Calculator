@@ -26,7 +26,8 @@ func ParseExpression(expression string) (*Node, error) {
 	}
 	// Если после парсинга остались неиспользованные токены, значит, выражение некорректно
 	if pos != len(tokens) {
-		return nil, errors.New("Invalid syntax: unexpected tokens remaining")
+		// Invalid syntax: unexpected tokens remaining
+		return nil, errors.New("Invalid data")
 	}
 	return node, nil
 }
@@ -51,16 +52,19 @@ func Tokenize(expression string) ([]string, error) {
 			// Проверка на два арифметических знака подряд
 			if (char == '+' || char == '-' || char == '*' || char == '/') &&
 				(lastToken == "+" || lastToken == "-" || lastToken == "*" || lastToken == "/") {
-				return nil, errors.New("Invalid syntax: two consecutive operators")
+				// Invalid syntax: two consecutive operators
+				return nil, errors.New("Invalid data")
 			}
 			// Проверка на отсутствие знака между скобками
 			if char == '(' && (lastToken == ")" || (lastToken != "" && isNumber(lastToken))) {
-				return nil, errors.New("Invalid syntax: missing operator between parentheses")
+				// Invalid syntax: missing operator between parentheses
+				return nil, errors.New("Invalid data")
 			}
 			tokens = append(tokens, string(char))
 			lastToken = string(char)
 		default:
-			return nil, errors.New("Invalid syntax: contains invalid characters")
+			// Invalid syntax: contains invalid characters
+			return nil, errors.New("Invalid data")
 		}
 	}
 	if num != "" {
@@ -68,7 +72,8 @@ func Tokenize(expression string) ([]string, error) {
 	}
 	// Проверка, что выражение не заканчивается оператором
 	if lastToken == "+" || lastToken == "-" || lastToken == "*" || lastToken == "/" {
-		return nil, errors.New("Invalid syntax: expression cannot end with an operator")
+		// Invalid syntax: expression cannot end with an operator
+		return nil, errors.New("Invalid data")
 	}
 	return tokens, nil
 }
@@ -132,7 +137,8 @@ func ParseTerm(tokens *[]string, pos *int) (*Node, error) {
 // числа и выражения в скобках
 func ParseFactor(tokens *[]string, pos *int) (*Node, error) {
 	if *pos >= len(*tokens) {
-		return nil, errors.New("Invalid syntax: unexpected end of expression")
+		// Invalid syntax: unexpected end of expression
+		return nil, errors.New("Invalid data")
 	}
 
 	token := (*tokens)[*pos]
@@ -144,7 +150,8 @@ func ParseFactor(tokens *[]string, pos *int) (*Node, error) {
 			return nil, err
 		}
 		if *pos >= len(*tokens) || (*tokens)[*pos] != ")" {
-			return nil, errors.New("Invalid syntax: unbalanced parentheses")
+			// Invalid syntax: unbalanced parentheses
+			return nil, errors.New("Invalid data")
 		}
 		*pos++ // Пропускаем ')'
 		return node, nil
@@ -152,7 +159,8 @@ func ParseFactor(tokens *[]string, pos *int) (*Node, error) {
 
 	// Проверяем, является ли токен числом
 	if _, err := strconv.Atoi(token); err != nil {
-		return nil, errors.New("Invalid syntax: expected a number")
+		// Invalid syntax: expected a number
+		return nil, errors.New("Invalid data")
 	}
 
 	return &Node{Op: token}, nil
