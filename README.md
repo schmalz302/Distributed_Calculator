@@ -53,8 +53,8 @@ Distributed Calculator – это распределенный калькуля�
 | **Request Method** | **Request Body**                                           | **Response Body**                                    | **HTTP Status Code** |
 |--------------------|------------------------------------------------------------|------------------------------------------------------|----------------------|
 | POST               | `{ "expression": "2 + 2" }`                               | `{ "id": "какой-то id"}`                             | 201 OK               |
-| POST               | `{ "expression": "2 / 0" }`                               | `{"error": "Internal server error"}`                 | 500 Internal Server Error |
-| POST               | `{ "expression": "invalid expression" }`                  | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
+| POST               | `любая другая ошибка помимо десериализации данных и корректности выражения`| `{"error": "Internal server error"}`| 500 Internal Server Error |
+| POST               | `{ "expression": "invalid expression" }`                  | `{ "error": "Invalid data" }`                        | 422 Unprocessable Entity |
 | GET                | N/A                                                       | `{ "error": "Method not allowed" }`                  | 405 Method Not Allowed |
 
 
@@ -84,8 +84,8 @@ Distributed Calculator – это распределенный калькуля�
 | GET                | N/A                          | `{ "error": "Not Found" }`                  | 404 Not found |
 | POST               | `{"id": 1, "result": 2.5}`   | `{"expressions":"OK"}`                  | 200 OK |
 | POST               | `{"id": 1, "result": 2.5}`   | `{ "error": "Not Found" }`                  | 404 Not found |
-| POST               | `{"id": 1, "result": 2.5}`   | `{ "error": "Invalid expression" }`                  | 422 Unprocessable Entity |
-| POST               | `{"id": 1, "result": 2.5}`   |  `{"error": "Internal server error"}`                  | 500 Internal Server Error |
+| POST               | `{"id": 1, "result": 2.5}`   | `{ "error": "Invalid data" }`                  | 422 Unprocessable Entity |
+| POST               | `любая другая ошибка помимо десериализации данных и корректности выражения`   |  `{"error": "Internal server error"}`                  | 500 Internal Server Error |
 
 ## Коды ответов
 - 200: Успешное вычисление

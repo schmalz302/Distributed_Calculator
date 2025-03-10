@@ -1,13 +1,14 @@
 // в этом файле будет происходить вся логика чтения, записи и обновления
 // выражений и задач
 
-
 package orchestrator
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
+
 	"github.com/google/uuid"
 )
 
@@ -20,7 +21,7 @@ type Task struct {
 	Operation_time int    `json:"operation_time"`
 	Status         int    `json:"Status"` // 1 - принята, 2 - готова к обработке, 3 - обработка, 4 - завершена
 	Result         string `json:"-"`
-	Expression_id  string `json:"-"`
+	Expression_id  string `json:"expression_id"`
 }
 
 // очередь выражений (на самом деле очереди не будет, есть просто пул задач,
@@ -40,20 +41,29 @@ type Expression struct {
 }
 
 // Добавляем задачи в очередь
-func (q *ExpressionQueue) AddExpression(expression string) string {
+func (q *ExpressionQueue) AddExpression(expression string) (string, error) {
+	// синхронизируем доступ к хранилищу выражений
 	q.mu.Lock()
 	defer q.mu.Unlock()
+
 	// формируем дерево ast
-	node := ParseExpression(expression)
+	// тут перехватываются все ошибки связанные с корректностью выражения
+	node, err := ParseExpression(expression)
+	if err != nil {
+		return "", err
+	}
 
 	// распределяем его по задачам
 	tasks := []Task{}
 	SplitTasks(node, &tasks)
 
-	// создаем объект выражения
+
+	// формируем id выражения
 	id_exp := uuid.New().String()
+	// создаем объект выражения 
 	exp_obj := Expression{ID: id_exp, count_tasks: len(tasks), Status: "pending"}
 
+	// закидываем в очередь задач
 	q.expressions[id_exp] = &exp_obj
 
 	// закидываем задачи в пул задач
@@ -62,20 +72,25 @@ func (q *ExpressionQueue) AddExpression(expression string) string {
 		t.Expression_id = id_exp
 		q.pool_task[task.ID] = &t
 	}
-	return id_exp
+	return id_exp, nil
 }
 
 // получаем задачу по id
 func (q *ExpressionQueue) GetExpressionid(id string) (*Expression, error) {
-	v, _ := q.expressions[id]
+	v, err := q.expressions[id]
+	if !err {
+		return nil, errors.New("Not found")
+	}
 	return v, nil
 }
 
 // получаем все задачи
-func (q *ExpressionQueue) GetAllExpressions() []*Expression {
-	expressions := []*Expression{}
+func (q *ExpressionQueue) GetAllExpressions() []Expression {
+	// здесь обработки на ошибки нет
+	// если нет выражений, мы просто вернем пустой список
+	expressions := []Expression{}
 	for _, expr := range q.expressions {
-		expressions = append(expressions, expr)
+		expressions = append(expressions, *expr)
 	}
 	return expressions
 }
@@ -129,28 +144,29 @@ func (q *ExpressionQueue) GetTask() *Task {
 }
 
 // Получаем результат от агента
-func (q *ExpressionQueue) SubmitResult(id string, result float64) {
+func (q *ExpressionQueue) SubmitResult(id string, result float64) error {
 	task, err := q.pool_task[id]
-	if err {
-
-		task.Result = fmt.Sprintf("%v", result)
-		if task.Status == 3 {
-			q.expressions[task.Expression_id].count_tasks -= 1
-			task.Status = 4
-		}
-		if q.expressions[task.Expression_id].count_tasks == 0 {
-			q.expressions[task.Expression_id].Result = fmt.Sprintf("%v", result)
-			q.expressions[task.Expression_id].Status = "done"
-			// удаляем все остальные таски
-			exp_id := task.Expression_id
-			for _, task := range q.pool_task {
-				if task.Expression_id == exp_id {
-					delete(q.pool_task, task.ID)
-				}
+	if !err {
+		return errors.New("Not found")
+	}
+	task.Result = fmt.Sprintf("%v", result)
+	if task.Status == 3 {
+		q.expressions[task.Expression_id].count_tasks -= 1
+		task.Status = 4
+	}
+	if q.expressions[task.Expression_id].count_tasks == 0 {
+		q.expressions[task.Expression_id].Result = fmt.Sprintf("%v", result)
+		q.expressions[task.Expression_id].Status = "done"
+		// удаляем все остальные таски
+		exp_id := task.Expression_id
+		for _, task := range q.pool_task {
+			if task.Expression_id == exp_id {
+				delete(q.pool_task, task.ID)
+			}
 		}
 
 	}
-	}
+	return nil
 }
 
 // Проверяем, является ли строка числом

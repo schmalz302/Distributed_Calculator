@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,19 +12,31 @@ import (
 	"sync"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	orch "github.com/schmalz302/Distributed_Calculator/internal/orchestrator"
 )
 
 func getComputingPower() int {
-	// получаем количество горутин
-	computingPower := os.Getenv("COMPUTING_POWER")
-	if computingPower == "" {
-		return 10 // По умолчанию 4 горутины
+	// Загружаем переменные из .env
+	err := godotenv.Load("../.env")
+	if err != nil {
+		return 4 // Значение по умолчанию
 	}
+
+	// Читаем значение переменной
+	computingPower := os.Getenv("COMPUTING_POWER")
+
+	if computingPower == "" {
+		return 4 // Значение по умолчанию
+	}
+
+	// переводим в число
 	num, err := strconv.Atoi(computingPower)
 	if err != nil {
-		return 10
+		return 4 // Значение по умолчанию
 	}
+	// возвращаем значение
 	return num
 }
 
@@ -53,7 +64,6 @@ func getTask() (*orch.Task, error) {
 
 func executeTask(task *orch.Task) orch.ProcessTaskRequest {
 	time.Sleep(3 * time.Second)
-	fmt.Println("eeeee")
 	var result float64	
 
 	arg1 := to_float_64(task.Arg1)
@@ -113,17 +123,13 @@ func worker() {
 		}
 		// Выполняем задачу
 		result := executeTask(task)
-		if result.Result != 0 {
-			// Отправляем результат обратно
-			sendResult(result)
-		}
+		sendResult(result)
 	}
 }
 
 func Start() {
 	// Количество допустимых горутин
 	numWorkers := getComputingPower()
-	fmt.Println(numWorkers)
 
 	var wg sync.WaitGroup
 
