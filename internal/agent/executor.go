@@ -40,6 +40,30 @@ func getComputingPower() int {
 	return num
 }
 
+
+func get_time_of_operation(oper_time_const string) int {
+	// Загружаем переменные из .env
+	err := godotenv.Load("../.env")
+	if err != nil {
+		return 0 // Значение по умолчанию
+	}
+
+	// Читаем значение переменной
+	computingPower := os.Getenv(oper_time_const)
+
+	if computingPower == "" {
+		return 0 // Значение по умолчанию
+	}
+
+	// переводим в число
+	num, err := strconv.Atoi(computingPower)
+	if err != nil {
+		return 0 // Значение по умолчанию
+	}
+	// возвращаем значение
+	return num
+}
+
 func getTask() (*orch.Task, error) {
 	// отправляем запрос в оркестратор
 	resp, err := http.Get("http://localhost:8080/internal/task")
@@ -63,7 +87,6 @@ func getTask() (*orch.Task, error) {
 }
 
 func executeTask(task *orch.Task) orch.ProcessTaskRequest {
-	time.Sleep(3 * time.Second)
 	var result float64	
 
 	arg1 := to_float_64(task.Arg1)
@@ -72,12 +95,21 @@ func executeTask(task *orch.Task) orch.ProcessTaskRequest {
 	switch task.Op {
 	case "+":
 		result = arg1 + arg2
+		// добавим искусственную нагрзку
+		time_op := get_time_of_operation("TIME_ADDITION_MS")
+		time.Sleep(time.Millisecond * time.Duration(time_op))
 	case "-":
 		result = arg1 - arg2
+		time_op := get_time_of_operation("TIME_SUBTRACTION_MS")
+		time.Sleep(time.Millisecond * time.Duration(time_op))
 	case "/":
 		result = arg1 / arg2
+		time_op := get_time_of_operation("TIME_DIVISIONS_MS")
+		time.Sleep(time.Millisecond * time.Duration(time_op))
 	case "*":
 		result = arg1 * arg2
+		time_op := get_time_of_operation("TIME_MULTIPLICATIONS_MS")
+		time.Sleep(time.Millisecond * time.Duration(time_op))
 	}
 	return orch.ProcessTaskRequest{Id: task.ID, Result: result}
 }
